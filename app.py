@@ -25,7 +25,7 @@ def download_with_gallery_dl(url, *args):
         logging.error(f"Failed to download image from {url}. Error: {e}")
         return jsonify({"error": str(e)}), 500
 
-@app.route('/download_image', methods=['POST'])
+@app.route('/download_image', methods=['POST, GET'])
 def download_image():
     url = request.json.get("url")
     if not url:

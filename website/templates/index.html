@@ -1,0 +1,24 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Downloader</title>
+    <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+</head>
+<body>
+    <h1>Download Content</h1>
+
+    <form action="/yt-dlp" method="POST,GET">
+        <label for="yt_url">YouTube Video URL:</label>
+        <input type="text" id="yt_url" name="url" required>
+        <button type="submit">Download Video</button>
+    </form>
+
+    <form action="/gallery-dl" method="POST,GET">
+        <label for="gallery_url">Gallery URL:</label>
+        <input type="text" id="gallery_url" name="url" required>
+        <button type="submit">Download Gallery</button>
+    </form>
+</body>
+</html>

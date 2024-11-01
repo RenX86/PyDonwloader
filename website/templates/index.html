@@ -3,32 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Download Manager</title>
+    <title>Downloader</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <div class="container">
-        <h1>Download Manager</h1>
-        
-        <div class="download-section">
-            <h2>YouTube Download</h2>
-            <div class="input-group">
-                <input type="text" id="youtube-url" placeholder="Enter YouTube URL">
-                <button onclick="downloadYouTube()">Download</button>
-            </div>
-            <div id="youtube-status" class="status"></div>
-        </div>
+    <h1>Download Content</h1>
 
-        <div class="download-section">
-            <h2>Gallery Download</h2>
-            <div class="input-group">
-                <input type="text" id="gallery-url" placeholder="Enter Gallery URL">
-                <button onclick="downloadGallery()">Download</button>
-            </div>
-            <div id="gallery-status" class="status"></div>
-        </div>
-    </div>
+    <form action="/yt-dlp" method="POST,GET">
+        <label for="yt_url">YouTube Video URL:</label>
+        <input type="text" id="yt_url" name="url" required>
+        <button type="submit">Download Video</button>
+    </form>
 
+<<<<<<< HEAD
     <script>
         async function downloadYouTube() {
             const url = document.getElementById('youtube-url').value;
@@ -90,5 +77,12 @@
             }
         }
     </script>
+=======
+    <form action="/gallery-dl" method="POST,GET">
+        <label for="gallery_url">Gallery URL:</label>
+        <input type="text" id="gallery_url" name="url" required>
+        <button type="submit">Download Gallery</button>
+    </form>
+>>>>>>> parent of 4b20dd1 (Yt working)
 </body>
 </html>

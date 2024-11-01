@@ -1,16 +1,20 @@
 import yt_dlp
+<<<<<<< HEAD
 import os
 from flask import send_file
+=======
+>>>>>>> parent of 4b20dd1 (Yt working)
 
-class YouTubeDownloader:
-    def __init__(self):
-        self.download_path = 'downloads'
-        os.makedirs(self.download_path, exist_ok=True)
+def download_video(data):
+    url = data.get("url")
+    if not url:
+        return "Error: No URL provided"
 
-    def download_youtube(self, url):
-        if not url:
-            raise ValueError("URL is required")
+    ydl_opts = {"format": "best"}
+    with yt_dlp.YoutubeDL(ydl_opts) as ydl:
+        ydl.download([url])
 
+<<<<<<< HEAD
         ydl_opts = {
             'format': 'best',
             'outtmpl': f'{self.download_path}/%(title)s.%(ext)s',
@@ -49,3 +53,6 @@ class YouTubeDownloader:
 downloader = YouTubeDownloader()
 download_youtube = downloader.download_youtube
 get_video_path = downloader.get_video_path
+=======
+    return f"Downloaded content from {url}"
+>>>>>>> parent of 4b20dd1 (Yt working)

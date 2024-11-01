@@ -3,23 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Downloader</title>
+    <title>Download Manager</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
 </head>
 <body>
-    <h1>Download Content</h1>
+    <div class="container">
+        <h1>Download Manager</h1>
+        
+        <div class="download-section">
+            <h2>YouTube Download</h2>
+            <div class="input-group">
+                <input type="text" id="youtube-url" placeholder="Enter YouTube URL">
+                <button onclick="downloadYouTube()">Download</button>
+            </div>
+            <div id="youtube-status" class="status"></div>
+        </div>
 
-    <form action="/yt-dlp" method="POST,GET">
-        <label for="yt_url">YouTube Video URL:</label>
-        <input type="text" id="yt_url" name="url" required>
-        <button type="submit">Download Video</button>
-    </form>
+        <div class="download-section">
+            <h2>Gallery Download</h2>
+            <div class="input-group">
+                <input type="text" id="gallery-url" placeholder="Enter Gallery URL">
+                <button onclick="downloadGallery()">Download</button>
+            </div>
+            <div id="gallery-status" class="status"></div>
+        </div>
+    </div>
 
-<<<<<<< HEAD
     <script>
         async function downloadYouTube() {
             const url = document.getElementById('youtube-url').value;
-            const resultDiv = document.getElementById('youtube-result');
+            const statusElement = document.getElementById('youtube-status');
             
             try {
                 statusElement.textContent = 'Downloading...';
@@ -33,14 +46,8 @@
                 
                 const data = await response.json();
                 if (response.ok) {
-                    const downloadLink = document.createElement('a');
-                    downloadLink.href = data.download_url;
-                    downloadLink.textContent = 'Download Video';
-                    downloadLink.className = 'download-button';
-
-                    resultDiv.innerHTML = `${data.message}<br>`;
-                    resultDiv.appendChild(downloadLink);
-
+                    statusElement.textContent = data.message;
+                    statusElement.className = 'status success';
                 } else {
                     throw new Error(data.message);
                 }
@@ -77,12 +84,5 @@
             }
         }
     </script>
-=======
-    <form action="/gallery-dl" method="POST,GET">
-        <label for="gallery_url">Gallery URL:</label>
-        <input type="text" id="gallery_url" name="url" required>
-        <button type="submit">Download Gallery</button>
-    </form>
->>>>>>> parent of 4b20dd1 (Yt working)
 </body>
 </html>

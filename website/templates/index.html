@@ -32,7 +32,7 @@
     <script>
         async function downloadYouTube() {
             const url = document.getElementById('youtube-url').value;
-            const statusElement = document.getElementById('youtube-status');
+            const resultDiv = document.getElementById('youtube-result');
             
             try {
                 statusElement.textContent = 'Downloading...';
@@ -46,8 +46,14 @@
                 
                 const data = await response.json();
                 if (response.ok) {
-                    statusElement.textContent = data.message;
-                    statusElement.className = 'status success';
+                    const downloadLink = document.createElement('a');
+                    downloadLink.href = data.download_url;
+                    downloadLink.textContent = 'Download Video';
+                    downloadLink.className = 'download-button';
+
+                    resultDiv.innerHTML = `${data.message}<br>`;
+                    resultDiv.appendChild(downloadLink);
+
                 } else {
                     throw new Error(data.message);
                 }

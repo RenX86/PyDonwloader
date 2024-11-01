@@ -1,5 +1,6 @@
 import yt_dlp
 import os
+from flask import send_file
 
 class YouTubeDownloader:
     def __init__(self):
@@ -20,7 +21,16 @@ class YouTubeDownloader:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
                 info = ydl.extract_info(url, download=True)
                 video_title = info.get('title', 'Video')
-                return f"Successfully downloaded: {video_title}"
+                ext = info.get('ext', 'mp4')
+                filename = f"{video_title}.{ext}"
+                filepath = os.path.join(self.download_path, filename)
+                
+                # Return both success message and file details
+                return {
+                    'message': f"Successfully downloaded: {video_title}",
+                    'filename': filename,
+                    'filepath': filepath
+                }
         except Exception as e:
             raise Exception(f"Failed to download video: {str(e)}")
 
@@ -31,6 +41,11 @@ class YouTubeDownloader:
         elif d['status'] == 'finished':
             print('Download complete')
 
+    def get_video_path(self, filename):
+        """Get the full path of a downloaded video"""
+        return os.path.join(self.download_path, filename)
+
 # Create a single instance to be used by the application
 downloader = YouTubeDownloader()
 download_youtube = downloader.download_youtube
+get_video_path = downloader.get_video_path

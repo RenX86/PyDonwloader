@@ -1,32 +1,29 @@
 from flask import Blueprint, request, jsonify, render_template, redirect, url_for
-from .services import yt, gallery
-
+from .services.yt import download_youtube
+from .services.gallery import download_gallery
 
 links = Blueprint('links', __name__)
 
 @links.route("/")
 def index():
-    return render_template("index.html")
+    return render_template('index.html')
 
-@links.route('/home')
-def home():
-    return  "<h1> HOME </h1>"
+@links.route('/download-youtube', methods=['POST'])
+def youtube_downloader():  # Fixed function name
+    data = request.get_json()
+    url = data.get('url')
+    try:
+        result = download_youtube(url)
+        return jsonify({'status': 'success', 'message': result})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400
 
-@links.route("/yt-dlp", methods=["POST, GET"])
-def download_video():
-    url = request.form.get("url")
-    if not url:
-        return redirect(url_for("main.index"))
-    
-    result = yt.download_video({"url": url})
-    return jsonify({"result": result})
-
-@links.route("/gallery-dl", methods=["POST,GET"])
-def download_gallery():
-    url = request.form.get("url")
-    if not url:
-        return redirect(url_for("main.index"))
-    
-    result = gallery.download_gallery({"url": url})
-    return jsonify({"result": result})
-
+@links.route('/download-gallery', methods=['POST'])
+def gallery_downloader():
+    data = request.get_json()
+    url = data.get('url')
+    try:
+        result = download_gallery(url)
+        return jsonify({'status': 'success', 'message': result})
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 400

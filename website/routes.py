@@ -1,6 +1,7 @@
-from flask import Blueprint, request, jsonify, render_template, redirect, url_for
+from flask import Blueprint, request, jsonify, render_template, redirect, url_for, send_from_directory
 from .services.yt import download_youtube
 from .services.gallery import download_gallery
+import os 
 
 links = Blueprint('links', __name__)
 
@@ -27,3 +28,8 @@ def gallery_downloader():
         return jsonify({'status': 'success', 'message': result})
     except Exception as e:
         return jsonify({'status': 'error', 'message': str(e)}), 400
+    
+@links.route('/downloads/<filename>')
+def download_file(filename):
+    download_path = os.path.join('website', 'static', 'downloads')
+    return send_from_directory(download_path, filename, as_attachment=True)

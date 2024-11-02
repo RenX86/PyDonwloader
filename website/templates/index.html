@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Download Manager</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+
 </head>
 <body>
     <div class="container">
@@ -17,7 +18,7 @@
                 <button onclick="downloadYouTube()">Download</button>
             </div>
             <div id="youtube-status" class="status"></div>
-        </div>
+        </div>  
 
         <div class="download-section">
             <h2>Gallery Download</h2>
@@ -27,6 +28,13 @@
             </div>
             <div id="gallery-status" class="status"></div>
         </div>
+        
+        <h2>Downloaded Files</h2>
+        <ul>
+            {% for file in files %}
+                <li><a href="{{ url_for('links.download_file', filename=file) }}">Download {{ file }}</a></li>
+            {% endfor %}
+        </ul>
     </div>
 
     <script>

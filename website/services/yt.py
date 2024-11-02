@@ -3,7 +3,7 @@ import os
 
 class YouTubeDownloader:
     def __init__(self):
-        self.download_path = 'downloads'
+        self.download_path = os.path.abspath('website/static/downloads')
         os.makedirs(self.download_path, exist_ok=True)
 
     def download_youtube(self, url):

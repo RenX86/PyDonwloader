@@ -1,26 +1,32 @@
 import yt_dlp
+from pathlib import Path
 import os
 
-class YouTubeDownloader:
+class VideoDownloader:
     def __init__(self):
-        self.download_path = os.path.abspath('website/static/downloads')
-        os.makedirs(self.download_path, exist_ok=True)
+        # Use Path for cross-platform compatibility
+        base_dir = Path(__file__).resolve().parent.parent
+        self.download_path = base_dir / 'static' / 'downloads'
+        self.download_path.mkdir(parents=True, exist_ok=True)
 
-    def download_youtube(self, url):
+    def download_video(self, url):
         if not url:
             raise ValueError("URL is required")
 
         ydl_opts = {
             'format': 'best',
-            'outtmpl': f'{self.download_path}/%(title)s.%(ext)s',
+            'outtmpl': os.path.join(self.download_path, '%(title)s.%(ext)s'),
             'progress_hooks': [self.progress_hook],
         }
 
         try:
             with yt_dlp.YoutubeDL(ydl_opts) as ydl:
-                info = ydl.extract_info(url, download=True)
+                info = ydl.extract_info(url, download=False)
                 video_title = info.get('title', 'Video')
-                return f"Successfully downloaded: {video_title}"
+                video_ext = info.get('ext', 'mp4')
+                video_filepath = os.path.join(self.download_path, f"{video_title}.{video_ext}")
+                ydl.download([url])
+                return video_filepath, video_title
         except Exception as e:
             raise Exception(f"Failed to download video: {str(e)}")
 
@@ -32,5 +38,5 @@ class YouTubeDownloader:
             print('Download complete')
 
 # Create a single instance to be used by the application
-downloader = YouTubeDownloader()
-download_youtube = downloader.download_youtube
+downloader = VideoDownloader()
+download_video = downloader.download_video

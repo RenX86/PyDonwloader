@@ -12,51 +12,53 @@
         <h1>Download Manager</h1>
         
         <div class="download-section">
-            <h2>YouTube Download</h2>
+            <h2>Video Download</h2>
             <div class="input-group">
-                <input type="text" id="youtube-url" placeholder="Enter YouTube URL">
-                <button onclick="downloadYouTube()">Download</button>
+                <input type="text" id="video-url" placeholder="Enter Video URL">
+                <button onclick="download_video()">Download</button>
             </div>
-            <div id="youtube-status" class="status"></div>
+            <div id="video-status" class="status"></div>
         </div>  
 
         <div class="download-section">
-            <h2>Gallery Download</h2>
+            <h2>Image Download</h2>
             <div class="input-group">
-                <input type="text" id="gallery-url" placeholder="Enter Gallery URL">
-                <button onclick="downloadGallery()">Download</button>
+                <input type="text" id="image-url" placeholder="Enter Image URL">
+                <button onclick="download_image()">Download</button>
             </div>
             <div id="gallery-status" class="status"></div>
         </div>
         
-        <h2>Downloaded Files</h2>
-        <ul>
-            {% for file in files %}
-                <li><a href="{{ url_for('links.download_file', filename=file) }}">Download {{ file }}</a></li>
-            {% endfor %}
-        </ul>
     </div>
 
     <script>
-        async function downloadYouTube() {
-            const url = document.getElementById('youtube-url').value;
-            const statusElement = document.getElementById('youtube-status');
+        async function download_video() {
+            const url = document.getElementById('video-url').value;
+            const statusElement = document.getElementById('video-status');
             
             try {
                 statusElement.textContent = 'Downloading...';
-                const response = await fetch('/download-youtube', {
+                const response = await fetch('/download-video', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ url }),
                 });
-                
-                const data = await response.json();
+    
                 if (response.ok) {
-                    statusElement.textContent = data.message;
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = url.split('/').pop() + '.mp4';  // Customize download name if needed
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    statusElement.textContent = 'Download started';
                     statusElement.className = 'status success';
                 } else {
+                    const data = await response.json();
                     throw new Error(data.message);
                 }
             } catch (error) {
@@ -64,26 +66,34 @@
                 statusElement.className = 'status error';
             }
         }
-
+    
         async function downloadGallery() {
-            const url = document.getElementById('gallery-url').value;
-            const statusElement = document.getElementById('gallery-status');
+            const url = document.getElementById('image-url').value;
+            const statusElement = document.getElementById('image-status');
             
             try {
                 statusElement.textContent = 'Downloading...';
-                const response = await fetch('/download-gallery', {
+                const response = await fetch('/download-image', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                     },
                     body: JSON.stringify({ url }),
                 });
-                
-                const data = await response.json();
+    
                 if (response.ok) {
-                    statusElement.textContent = data.message;
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = url.split('/').pop() + '.zip';  // Adjust the file name if needed
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    statusElement.textContent = 'Download started';
                     statusElement.className = 'status success';
                 } else {
+                    const data = await response.json();
                     throw new Error(data.message);
                 }
             } catch (error) {
@@ -92,5 +102,6 @@
             }
         }
     </script>
+    
 </body>
 </html>

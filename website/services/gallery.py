@@ -1,37 +1,30 @@
 import gallery_dl
 import os
+from pathlib import Path
 
-class GalleryDownloader:
+class ImageDownloader:
     def __init__(self):
-        self.download_path = os.path.abspath('website/static/downloads')
-        os.makedirs(self.download_path, exist_ok=True)
+        # Use Path for cross-platform compatibility
+        base_dir = Path(__file__).resolve().parent.parent
+        self.download_path = base_dir / 'static' / 'downloads'
+        self.download_path.mkdir(parents=True, exist_ok=True)
 
-    def download_gallery(self, url):
+    def download_image(self, url):
         if not url:
             raise ValueError("URL is required")
-
+        
         try:
-            # Change the working directory to downloads folder
-            original_dir = os.getcwd()
-            os.chdir(self.download_path)
-
             # Start the download with minimal configuration
             job = gallery_dl.job.Job(url)
             success = job.run()
 
-            # Restore original working directory
-            os.chdir(original_dir)
-
             if success:
-                return f"Successfully downloaded gallery from: {url}"
+                return f"Successfully downloaded image from: {url}"
             else:
                 raise Exception("Download failed")
         except Exception as e:
-            # Make sure we restore the working directory even if there's an error
-            if 'original_dir' in locals():
-                os.chdir(original_dir)
-            raise Exception(f"Failed to download gallery: {str(e)}")
+            raise Exception(f"Failed to download image: {str(e)}")
 
 # Create a single instance to be used by the application
-downloader = GalleryDownloader()
-download_gallery = downloader.download_gallery
+downloader = ImageDownloader()
+download_image = downloader.download_image

@@ -3,6 +3,7 @@ from pathlib import Path
 from website.services.video import VideoDownloader
 from website.services.image import ImageDownloader
 
+
 links = Blueprint('links', __name__)
 
 @links.route("/")
@@ -35,8 +36,8 @@ def download_image():
 
     try:
         downloader = ImageDownloader()
-        image_filepath, image_filename = downloader.download_image(url)
-        return send_file(image_filepath, as_attachment=True, download_name=image_filename)
+        image_filepath, image_title = downloader.download_image(url)
+        return send_file(image_filepath, as_attachment=True, download_name=f"{image_title}")
     except Exception as e:
         return jsonify({"message": f"Failed to download image: {str(e)}"}), 500
     

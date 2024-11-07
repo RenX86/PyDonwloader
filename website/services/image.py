@@ -1,6 +1,7 @@
 import os
 from pathlib import Path
 import subprocess
+import requests
 
 class ImageDownloader:
     def __init__(self):
@@ -27,7 +28,11 @@ class ImageDownloader:
             raise Exception(f"Failed to download image: {str(e)}")
         except Exception as e:
             raise Exception(f"Failed to download image: {str(e)}")
+        
+    def fetch(url):
+        response = requests.get(url)
+        return response.content  # Return the media data as bytes
 
 # Create a single instance to be used by the application
 downloader = ImageDownloader()
-download_image = downloader.download_image
+download_image = downloader.download_image  

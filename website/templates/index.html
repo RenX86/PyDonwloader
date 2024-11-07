@@ -5,6 +5,7 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Download Manager</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
 
 </head>
 <body>
@@ -86,7 +87,7 @@
                     const downloadUrl = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = downloadUrl;
-                    a.download = url.split('/').pop() + '.zip';  // Adjust the file name if needed
+                    a.download = url.split('/').pop() + ' ';  // Adjust the file name if needed
                     document.body.appendChild(a);
                     a.click();
                     a.remove();

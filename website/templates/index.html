@@ -26,7 +26,7 @@
                 <input type="text" id="image-url" placeholder="Enter Image URL">
                 <button onclick="download_image()">Download</button>
             </div>
-            <div id="gallery-status" class="status"></div>
+            <div id="image-status" class="status"></div>
         </div>
         
     </div>
@@ -67,7 +67,7 @@
             }
         }
     
-        async function downloadGallery() {
+        async function download_image() {
             const url = document.getElementById('image-url').value;
             const statusElement = document.getElementById('image-status');
             

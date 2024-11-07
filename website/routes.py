@@ -1,9 +1,7 @@
 from flask import Blueprint, request, jsonify, render_template, send_from_directory, send_file
-import os 
-import tempfile
 from pathlib import Path
-from website.services.yt import VideoDownloader
-from website.services.gallery import ImageDownloader
+from website.services.video import VideoDownloader
+from website.services.image import ImageDownloader
 
 links = Blueprint('links', __name__)
 
@@ -37,11 +35,8 @@ def download_image():
 
     try:
         downloader = ImageDownloader()
-        with tempfile.TemporaryDirectory() as tmpdirname:
-            downloader.download_path = tmpdirname  # Set temporary directory
-            filename = downloader.download_image(url)
-            filepath = os.path.join(tmpdirname, filename)
-            return send_file(filepath, as_attachment=True, download_name=filename)
+        image_filepath, image_filename = downloader.download_image(url)
+        return send_file(image_filepath, as_attachment=True, download_name=image_filename)
     except Exception as e:
         return jsonify({"message": f"Failed to download image: {str(e)}"}), 500
     

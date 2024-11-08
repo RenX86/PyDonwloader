@@ -1,4 +1,8 @@
 flask
 yt-dlp
 gallery-dl
-gunicorn
+mimetypes
+shutil
+imghdr
+pathlib
+uuid

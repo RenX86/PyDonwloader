@@ -3,14 +3,17 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Download Manager</title>
+    <title>Downloader</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
+    
+    
     
 
 </head>
 <body>
+    
     <div class="container">
-        <h1>Download Manager</h1>
+        <h1>Downloader</h1>
         
         <div class="download-section">
             <h2>Video Download</h2>
@@ -28,46 +31,9 @@
                 <button onclick="download_image()">Download</button>
             </div>
             <div id="image-status" class="status"></div>
-        </div>
-        
+        </div>    
     </div>
-
     <script>
-        async function download_video() {
-            const url = document.getElementById('video-url').value;
-            const statusElement = document.getElementById('video-status');
-            
-            try {
-                statusElement.textContent = 'Downloading...';
-                const response = await fetch('/download-video', {
-                    method: 'POST',
-                    headers: {
-                        'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({ url }),
-                });
-    
-                if (response.ok) {
-                    const blob = await response.blob();
-                    const downloadUrl = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = downloadUrl;
-                    a.download = url.split('/').pop() + '.mp4';  // Customize download name if needed
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    statusElement.textContent = 'Download started';
-                    statusElement.className = 'status success';
-                } else {
-                    const data = await response.json();
-                    throw new Error(data.message);
-                }
-            } catch (error) {
-                statusElement.textContent = `Error: ${error.message}`;
-                statusElement.className = 'status error';
-            }
-        }
-    
         async function download_image() {
             const url = document.getElementById('image-url').value;
             const statusElement = document.getElementById('image-status');
@@ -102,7 +68,45 @@
                 statusElement.className = 'status error';
             }
         }
-    </script>
+
+        async function download_video() {
+            const url = document.getElementById('video-url').value;
+            const statusElement = document.getElementById('video-status');
+            
+            try {
+                statusElement.textContent = 'Downloading...';
+                const response = await fetch('/download-video', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({ url }),
+                });
     
+                if (response.ok) {
+                    const blob = await response.blob();
+                    const downloadUrl = window.URL.createObjectURL(blob);
+                    const a = document.createElement('a');
+                    a.href = downloadUrl;
+                    a.download = url.split('/').pop() + '.mp4';  // Customize download name if needed
+                    document.body.appendChild(a);
+                    a.click();
+                    a.remove();
+                    statusElement.textContent = 'Download started';
+                    statusElement.className = 'status success';
+                } else {
+                    const data = await response.json();
+                    throw new Error(data.message);
+                }
+            } catch (error) {
+                statusElement.textContent = `Error: ${error.message}`;
+                statusElement.className = 'status error';
+            }
+        }
+
+    </script>
+
+
+
 </body>
 </html>

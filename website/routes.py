@@ -1,47 +1,171 @@
-from flask import Blueprint, request, jsonify, render_template, send_from_directory, send_file
+from flask import Blueprint, render_template, jsonify, send_file, request
+from website.services.image import *
+from website.services.video import *
+import os
 from pathlib import Path
-from website.services.video import VideoDownloader
-from website.services.image import ImageDownloader
-
+import logging
+import mimetypes
 
 links = Blueprint('links', __name__)
 
 @links.route("/")
 def index():
-    # Get list of files in download directory
-    download_path = Path(__file__).resolve().parent / 'static' / 'downloads'
-    files = [f.name for f in download_path.glob('*') if f.is_file()]
-    return render_template('index.html', files=files)
+    return render_template('index.html')
 
-@links.route('/download-video', methods=['POST'])
-def download_video():
-    data = request.get_json()
-    url = data.get('url')
-    if not url:
-        return jsonify({"message": "URL is required"}), 400
-
+@links.route("/download-image", methods=["POST"])
+def download_image_route():
     try:
-        downloader = VideoDownloader()
-        video_filepath, video_title = downloader.download_video(url)
-        return send_file(video_filepath, as_attachment=True, download_name=f"{video_title}.mp4")
+        data = request.get_json()
+        url = data.get("url")
+        
+        if not url:
+            return jsonify({"message": "URL is required"}), 400
+        
+        # Download the image
+        result = download_image(url)
+        
+        if result["status"] == "success":
+            file_path = result["file_path"]
+            original_name = result.get("original_name", "")
+            
+            # Verify the file exists and is actually a file (not a directory)
+            if not os.path.isfile(file_path):
+                logger.error(f"Not a valid file: {file_path}")
+                return jsonify({"message": "Download resulted in a directory, not a file"}), 400
+                
+            try:
+                # Ensure we have read permissions
+                Path(file_path).chmod(0o644)
+                
+                # Determine the correct filename and mimetype
+                download_name = original_name if original_name else os.path.basename(file_path)
+                mime_type = mimetypes.guess_type(file_path)[0] or 'application/octet-stream'
+                
+                # Serve the file to the user
+                response = send_file(
+                    file_path,
+                    as_attachment=True,
+                    download_name=download_name,
+                    mimetype=mime_type
+                )
+                
+                # Clean up: remove the file after sending
+                @response.call_on_close
+                def cleanup():
+                    try:
+                        if os.path.isfile(file_path):
+                            os.chmod(file_path, 0o666)  # Ensure we have permission to delete
+                            os.remove(file_path)
+                            logger.debug(f"Cleaned up file: {file_path}")
+                    except Exception as e:
+                        logger.error(f"Error cleaning up file: {str(e)}")
+                
+                return response
+                
+            except Exception as e:
+                logger.error(f"Error sending file: {str(e)}")
+                # Try to clean up if we failed to send
+                try:
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                except:
+                    pass
+                return jsonify({"message": f"Error sending file: {str(e)}"}), 500
+        else:
+            return jsonify({"message": result["message"]}), 400
+            
     except Exception as e:
-        return jsonify({"message": f"Failed to download video: {str(e)}"}), 500
+        logger.error(f"Unexpected error in download route: {str(e)}")
+        return jsonify({"message": f"Server error: {str(e)}"}), 500
     
-@links.route('/download-image', methods=['POST'])
-def download_image():
-    data = request.get_json()
-    url = data.get('url')
-    if not url:
-        return jsonify({"message": "URL is required"}), 400
-
+@links.route("/video-info", methods=["POST"])
+def video_info_route():
+    """Get video information without downloading."""
     try:
-        downloader = ImageDownloader()
-        image_filepath, image_title = downloader.download_image(url)
-        return send_file(image_filepath, as_attachment=True, download_name=f"{image_title}")
+        data = request.get_json()
+        url = data.get("url")
+        
+        if not url:
+            return jsonify({"message": "URL is required"}), 400
+            
+        result = get_video_info(url)
+        
+        if result["status"] == "success":
+            return jsonify(result)
+        else:
+            return jsonify({"message": result["message"]}), 400
+            
     except Exception as e:
-        return jsonify({"message": f"Failed to download image: {str(e)}"}), 500
-    
-@links.route('/downloads/<filename>')
-def download_file(filename):
-    download_path = Path(__file__).resolve().parent / 'static' / 'downloads'
-    return send_from_directory(str(download_path), filename, as_attachment=True)
+        logger.error(f"Unexpected error in video info route: {str(e)}")
+        return jsonify({"message": f"Server error: {str(e)}"}), 500
+
+@links.route("/download-video", methods=["POST"])
+def download_video_route():
+    """Download video and send to user."""
+    try:
+        data = request.get_json()
+        url = data.get("url")
+        format_id = data.get("format_id")  # Optional format selection
+        
+        if not url:
+            return jsonify({"message": "URL is required"}), 400
+        
+        # Create progress tracker
+        progress = VideoDownloadProgress()
+        
+        # Download the video
+        result = download_video(url, format_id, progress_hooks=[progress])
+        
+        if result["status"] == "success":
+            file_path = result["file_path"]
+            original_name = result.get("original_name", "")
+            
+            # Verify the file exists and is actually a file
+            if not os.path.isfile(file_path):
+                logger.error(f"Not a valid file: {file_path}")
+                return jsonify({"message": "Download resulted in a directory, not a file"}), 400
+                
+            try:
+                # Ensure we have read permissions
+                Path(file_path).chmod(0o644)
+                
+                # Determine the correct filename and mimetype
+                download_name = original_name if original_name else os.path.basename(file_path)
+                mime_type = mimetypes.guess_type(file_path)[0] or 'application/octet-stream'
+                
+                # Serve the file to the user
+                response = send_file(
+                    file_path,
+                    as_attachment=True,
+                    download_name=download_name,
+                    mimetype=mime_type
+                )
+                
+                # Clean up: remove the file after sending
+                @response.call_on_close
+                def cleanup():
+                    try:
+                        if os.path.isfile(file_path):
+                            os.chmod(file_path, 0o666)  # Ensure we have permission to delete
+                            os.remove(file_path)
+                            logger.debug(f"Cleaned up file: {file_path}")
+                    except Exception as e:
+                        logger.error(f"Error cleaning up file: {str(e)}")
+                
+                return response
+                
+            except Exception as e:
+                logger.error(f"Error sending file: {str(e)}")
+                # Try to clean up if we failed to send
+                try:
+                    if os.path.isfile(file_path):
+                        os.remove(file_path)
+                except:
+                    pass
+                return jsonify({"message": f"Error sending file: {str(e)}"}), 500
+        else:
+            return jsonify({"message": result["message"]}), 400
+            
+    except Exception as e:
+        logger.error(f"Unexpected error in video download route: {str(e)}")
+        return jsonify({"message": f"Server error: {str(e)}"}), 500

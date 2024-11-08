@@ -1,7 +1,6 @@
 flask
 yt-dlp
 gallery-dl
-mimetypes
 shutil
 imghdr
 pathlib

@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, jsonify, send_file, request
+from flask import Blueprint, render_template, jsonify, send_file, request, after_this_request
 from website.services.image import *
 from website.services.video import *
 import os
@@ -11,6 +11,15 @@ links = Blueprint('links', __name__)
 @links.route("/")
 def index():
     return render_template('index.html')
+
+def cleanup_file(file_path):
+    try:
+        if os.path.isfile(file_path):
+            os.chmod(file_path, 0o666)  # Ensure we have permission to delete
+            os.remove(file_path)
+            logger.debug(f"Cleaned up file: {file_path}")
+    except Exception as e:
+        logger.error(f"Error cleaning up file: {str(e)}")
 
 @links.route("/download-image", methods=["POST"])
 def download_image_route():
@@ -133,6 +142,12 @@ def download_video_route():
                 download_name = original_name if original_name else os.path.basename(file_path)
                 mime_type = mimetypes.guess_type(file_path)[0] or 'application/octet-stream'
                 
+                # Use @after_this_request to delay file deletion until after it is sent
+                @after_this_request
+                def cleanup_on_close(response):
+                    cleanup_file(file_path)
+                    return response
+                
                 # Serve the file to the user
                 response = send_file(
                     file_path,
@@ -140,28 +155,13 @@ def download_video_route():
                     download_name=download_name,
                     mimetype=mime_type
                 )
-                
-                # Clean up: remove the file after sending
-                @response.call_on_close
-                def cleanup():
-                    try:
-                        if os.path.isfile(file_path):
-                            os.chmod(file_path, 0o666)  # Ensure we have permission to delete
-                            os.remove(file_path)
-                            logger.debug(f"Cleaned up file: {file_path}")
-                    except Exception as e:
-                        logger.error(f"Error cleaning up file: {str(e)}")
-                
+
                 return response
                 
             except Exception as e:
                 logger.error(f"Error sending file: {str(e)}")
-                # Try to clean up if we failed to send
-                try:
-                    if os.path.isfile(file_path):
-                        os.remove(file_path)
-                except:
-                    pass
+                # Attempt cleanup if sending the file failed
+                cleanup_file(file_path)
                 return jsonify({"message": f"Error sending file: {str(e)}"}), 500
         else:
             return jsonify({"message": result["message"]}), 400

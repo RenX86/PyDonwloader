@@ -5,25 +5,23 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Downloader</title>
     <link rel="stylesheet" href="{{ url_for('static', filename='style.css') }}">
-    
-    
-    
-
 </head>
 <body>
-    
     <div class="container">
         <h1>Downloader</h1>
         
+        <!-- Video Download Section -->
         <div class="download-section">
             <h2>Video Download</h2>
             <div class="input-group">
                 <input type="text" id="video-url" placeholder="Enter Video URL">
-                <button onclick="download_video()">Download</button>
+                <button onclick="prepare_video_download()">Download</button>
             </div>
             <div id="video-status" class="status"></div>
+            <a id="save-video-button" href="#" style="display: none;">Save Video</a> <!-- Save button initially hidden -->
         </div>  
 
+        <!-- Image Download Section -->
         <div class="download-section">
             <h2>Image Download</h2>
             <div class="input-group">
@@ -33,6 +31,7 @@
             <div id="image-status" class="status"></div>
         </div>    
     </div>
+
     <script>
         async function download_image() {
             const url = document.getElementById('image-url').value;
@@ -53,7 +52,7 @@
                     const downloadUrl = window.URL.createObjectURL(blob);
                     const a = document.createElement('a');
                     a.href = downloadUrl;
-                    a.download = url.split('/').pop() + ' ';  // Adjust the file name if needed
+                    a.download = url.split('/').pop();
                     document.body.appendChild(a);
                     a.click();
                     a.remove();
@@ -69,12 +68,15 @@
             }
         }
 
-        async function download_video() {
+        async function prepare_video_download() {
             const url = document.getElementById('video-url').value;
             const statusElement = document.getElementById('video-status');
+            const saveButton = document.getElementById('save-video-button');
             
             try {
-                statusElement.textContent = 'Downloading...';
+                statusElement.textContent = 'Preparing download...';
+                
+                // Initiate download preparation
                 const response = await fetch('/download-video', {
                     method: 'POST',
                     headers: {
@@ -82,18 +84,17 @@
                     },
                     body: JSON.stringify({ url }),
                 });
-    
+
                 if (response.ok) {
-                    const blob = await response.blob();
-                    const downloadUrl = window.URL.createObjectURL(blob);
-                    const a = document.createElement('a');
-                    a.href = downloadUrl;
-                    a.download = url.split('/').pop() + '.mp4';  // Customize download name if needed
-                    document.body.appendChild(a);
-                    a.click();
-                    a.remove();
-                    statusElement.textContent = 'Download started';
-                    statusElement.className = 'status success';
+                    const data = await response.json();
+                    if (data.status === "success" && data.save_url) {
+                        saveButton.href = data.save_url;  // Set the link for the save button
+                        saveButton.style.display = "inline";  // Show the "Save Video" button
+                        statusElement.textContent = 'Click "Save Video" to download';
+                        statusElement.className = 'status success';
+                    } else {
+                        throw new Error(data.message || 'Unexpected error');
+                    }
                 } else {
                     const data = await response.json();
                     throw new Error(data.message);
@@ -101,12 +102,9 @@
             } catch (error) {
                 statusElement.textContent = `Error: ${error.message}`;
                 statusElement.className = 'status error';
+                saveButton.style.display = "none";  // Hide save button if error occurs
             }
         }
-
     </script>
-
-
-
 </body>
 </html>

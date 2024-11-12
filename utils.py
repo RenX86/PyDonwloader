@@ -1,13 +1,11 @@
-import os
-from typing import Optional, Dict, Any
+import uuid, shutil
 from pathlib import Path
-import uuid
-import shutil
 from werkzeug.utils import secure_filename
 from urllib.parse import urlparse
 from config import Config
 from logger import logger
-from urllib.parse import unquote
+from threading import Timer
+import os
 
 class FileManager:
     """Handles file operations with security measures."""
@@ -54,3 +52,28 @@ class URLValidator:
         except Exception:
             return False
         
+def delayed_cleanup(file_path, delay=20, download_store=None, file_id=None):
+    
+    def cleanup():
+        try:
+            # Delete the file
+            if os.path.isfile(file_path):
+                os.remove(file_path)
+                logger.debug(f"Cleaned up file after delay: {file_path}")
+
+            # Remove entry from download_store if specified
+            if download_store is not None and file_id is not None:
+                download_store.pop(file_id, None)
+                logger.debug(f"Removed {file_id} from download store")
+
+            # Check if the parent folder is empty and not DOWNLOAD_FOLDER, then delete
+            temp_folder = Path(file_path).parent
+            if temp_folder != Config.DOWNLOAD_FOLDER and not any(temp_folder.iterdir()):
+                shutil.rmtree(temp_folder)
+                logger.debug(f"Deleted empty temporary folder: {temp_folder}")
+
+        except Exception as e:
+            logger.error(f"Failed to clean up file or folder: {str(e)}")
+
+    # Start the timer for delayed cleanup
+    Timer(delay, cleanup).start()

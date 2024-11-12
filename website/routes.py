@@ -1,13 +1,14 @@
-from flask import Blueprint, render_template, jsonify, send_file, request, after_this_request
+from flask import Blueprint, render_template, jsonify, send_file, request
 from website.services.image import download_image
 from website.services.video import get_video_info, download_video, VideoDownloadProgress
-from logger import logger  # Import centralized logger
-import os
+from logger import logger 
 from uuid import uuid4
+from threading import Timer 
+import os, re, mimetypes, shutil
 from pathlib import Path
-import mimetypes
-import re
-from threading import Timer  
+from config import Config
+from utils import delayed_cleanup
+ 
 
 links = Blueprint('links', __name__)
 
@@ -22,13 +23,19 @@ def is_valid_url(url):
 def index():
     return render_template('index.html')
 
-def cleanup_file(file_path):
+def cleanup_file(file_path: Path):
     try:
         if os.path.isfile(file_path):
             os.remove(file_path)
             logger.debug(f"Cleaned up file: {file_path}")
+
+        # Check if the temporary folder is empty
+        if not any(Config.TEMP_FOLDER.glob('*')):
+            # Remove the temporary folder
+            shutil.rmtree(Config.TEMP_FOLDER)
+            logger.debug(f"Cleaned up temporary folder: {Config.TEMP_FOLDER}")
     except Exception as e:
-        logger.error(f"Error cleaning up file: {str(e)}")
+        logger.error(f"Error cleaning up file or folder: {str(e)}")
 
 @links.route("/download-image", methods=["POST"])
 def download_image_route():
@@ -62,9 +69,7 @@ def download_image_route():
                     mimetype=mime_type
                 )
 
-                @response.call_on_close
-                def cleanup():
-                    cleanup_file(file_path)
+                delayed_cleanup(file_path)
                 return response
 
             except Exception as e:
@@ -77,8 +82,6 @@ def download_image_route():
     except Exception as e:
         logger.error(f"Unexpected error in download-image route: {str(e)}")
         return jsonify({"message": "Server error"}), 500
-
-# Similar updates should be made to `video_info_route` and `download_video_route`, with `url` validation and file cleanup logic.
 
     
 @links.route("/video-info", methods=["POST"])
@@ -160,18 +163,7 @@ def save_video_route(file_id):
             download_name=original_name,
             mimetype=mime_type
         )
-
-        # Delayed cleanup function
-        def delayed_cleanup():
-            try:
-                os.remove(file_path)
-                download_store.pop(file_id, None)  # Remove entry from download_store
-                logger.debug(f"Cleaned up file after delay: {file_path}")
-            except Exception as e:
-                logger.error(f"Failed to clean up file: {str(e)}")
-
-        # Set up a 20-second delay before calling the cleanup function
-        Timer(20, delayed_cleanup).start()
+        delayed_cleanup(file_path, download_store=download_store, file_id=file_id)
 
         return response
 

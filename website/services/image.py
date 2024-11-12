@@ -1,14 +1,11 @@
-import imghdr
+import imghdr, subprocess, uuid, shutil
 import subprocess
-from typing import Dict, Any, Optional
-from pathlib import Path
+from typing import Dict, Any
 from config import Config
 from utils import FileManager, URLValidator
 from logger import logger
-import uuid
-import shutil
 
-def get_file_extension(file_path: Path) -> str:
+"""def get_file_extension(file_path: Path) -> str:
     
     # Try to detect image type
     img_type = imghdr.what(str(file_path))
@@ -20,7 +17,7 @@ def get_file_extension(file_path: Path) -> str:
     if ext in Config.ALLOWED_IMAGE_EXTENSIONS:
         return ext
     
-    return '.jpg'  # Default extension
+    return '.jpg'  # Default extension"""
 
 def download_image(url: str) -> Dict[str, Any]:
     
@@ -34,12 +31,12 @@ def download_image(url: str) -> Dict[str, Any]:
         temp_folder = FileManager.create_temp_folder()
         
         # Download using gallery-dl
-        command = ["gallery-dl", "-d", str(temp_folder), url]
+        command = ["gallery-dl", "-d", str(Config.TEMP_FOLDER), url]
         result = subprocess.run(command, capture_output=True, text=True, check=True)
         logger.debug(f"gallery-dl output: {result.stdout}")
         
         # Find downloaded files
-        downloaded_files = list(temp_folder.rglob('*'))
+        downloaded_files = list(Config.TEMP_FOLDER.rglob('*'))
         downloaded_files = [f for f in downloaded_files if f.is_file()]
         
         if not downloaded_files:
@@ -52,7 +49,7 @@ def download_image(url: str) -> Dict[str, Any]:
             return {"status": "error", "message": "File exceeds maximum allowed size"}
         
         # Prepare final path
-        file_extension = get_file_extension(source_file)
+        file_extension =(source_file)
         final_filename = f"{uuid.uuid4().hex}{file_extension}"
         final_path = FileManager.secure_path(Config.DOWNLOAD_FOLDER, final_filename)
         
@@ -75,6 +72,4 @@ def download_image(url: str) -> Dict[str, Any]:
     except Exception as e:
         logger.error(f"Unexpected error: {str(e)}")
         return {"status": "error", "message": f"Unexpected error: {str(e)}"}
-    finally:
-        if temp_folder:
-            FileManager.cleanup_file(temp_folder)
+    

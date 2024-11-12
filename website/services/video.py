@@ -1,13 +1,9 @@
 from typing import Dict, Any, Optional, List, Callable
-import yt_dlp
+import yt_dlp, uuid, shutil, time
 from pathlib import Path
-import uuid
 from config import Config
 from utils import FileManager, URLValidator
 from logger import logger
-import shutil
-import time
-
 
 
 class VideoDownloadProgress:
